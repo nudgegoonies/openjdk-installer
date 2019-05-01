@@ -198,6 +198,17 @@ public class BuildDebianPackage extends AbstractBuildLinuxPackage {
                 throw new UncheckedIOException(e);
             }
         }
+
+        // On Debian and derivatives, ca-certificates-java creates a keystore with all trusted certificates from
+        // /etc/ssl/certs and saves it in /etc/ssl/certs/java/cacerts. We replace the cacerts shipped with the JDK with
+        // a symlink to /etc/ssl/certs/java/cacerts because that's what the stock packages do.
+        Path cacerts = Paths.get(getTemporaryDir().toString(), getJdkDirectoryName(), "lib", "security", "cacerts");
+        try {
+            Files.deleteIfExists(cacerts);
+            Files.createSymbolicLink(cacerts, Paths.get("/etc/ssl/certs/java/cacerts"));
+        } catch (IOException e) {
+            throw new java.io.UncheckedIOException("Could not create symlink to cacerts file", e);
+        }
     }
 
     @Override
