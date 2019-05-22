@@ -190,19 +190,27 @@ public class BuildDebianPackage extends AbstractBuildLinuxPackage {
 
         // The target path must be relative, otherwise it contains the full path to the build
         // directory which usually does not correspond to the installation directory on the target machine.
-        Path target = Paths.get("lib", "src.zip");
-        if (!link.toFile().exists()) {
-            try {
-                Files.createSymbolicLink(link, target);
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
+        if (!getPackageName().contains("jre")) {
+            Path target = Paths.get("lib", "src.zip");
+            if (!link.toFile().exists()) {
+                try {
+                    Files.createSymbolicLink(link, target);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
             }
         }
 
         // On Debian and derivatives, ca-certificates-java creates a keystore with all trusted certificates from
         // /etc/ssl/certs and saves it in /etc/ssl/certs/java/cacerts. We replace the cacerts shipped with the JDK with
         // a symlink to /etc/ssl/certs/java/cacerts because that's what the stock packages do.
-        Path cacerts = Paths.get(getTemporaryDir().toString(), getJdkDirectoryName(), "lib", "security", "cacerts");
+        Path cacerts;
+        if (getPackageVersion().startsWith("1.8.") && !getPackageName().contains("jre")) {
+            cacerts = Paths.get(getTemporaryDir().toString(),
+                    getJdkDirectoryName(), "jre", "lib", "security", "cacerts");
+        } else {
+            cacerts = Paths.get(getTemporaryDir().toString(), getJdkDirectoryName(), "lib", "security", "cacerts");
+        }
         try {
             Files.deleteIfExists(cacerts);
             Files.createSymbolicLink(cacerts, Paths.get("/etc/ssl/certs/java/cacerts"));

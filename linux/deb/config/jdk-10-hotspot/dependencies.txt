@@ -1,4 +1,5 @@
-ca-certificates
+adoptopenjdk-10-hotspot
+ca-certificates-java
 java-common
 libasound2
 libc6
